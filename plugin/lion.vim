@@ -2,21 +2,20 @@
 " Maintainer:   Tom McDonald <http://github.com/tommcdo>
 " Version:      1.0
 
-let s:count = 1
 if !exists('g:lion_prompt')
 	let g:lion_prompt = 'Pattern [/]: '
 endif
 
 function! s:alignRight(type)
-	return s:align('right', a:type, s:get_info('state') ? '' : s:get_info('pattern'))
+	return s:align('right', a:type, s:get_info('state') ? '' : s:get_info('pattern'), s:get_info('count'))
 endfunction
 
 function! s:alignLeft(type)
-	return s:align('left', a:type, s:get_info('state') ? '' : s:get_info('pattern'))
+	return s:align('left', a:type, s:get_info('state') ? '' : s:get_info('pattern'), s:get_info('count'))
 endfunction
 
 " Align a range to a particular character
-function! s:align(mode, type, align_char)
+function! s:align(mode, type, align_char, count)
 	let sel_save = &selection
 	let &selection = "inclusive"
 
@@ -39,7 +38,7 @@ function! s:align(mode, type, align_char)
 		let changed = 0 " TODO: Use this for 'all' mode when I get around to it
 
 		" Align for each character up to count
-		for iteration in range(1, s:count)
+		for iteration in range(1, a:count)
 			let line_virtual_pos = [] " Keep track of positions
 			let longest = -1          " Track longest sequence
 
@@ -142,8 +141,8 @@ function! s:first_non_ws_after(line, pattern, start, count)
 endfunction
 
 function! s:set_opfunc(func) abort
-	let s:count = v:count1
 	call s:set_info('state', 1)
+	call s:set_info('count', v:count1)
 	execute 'setlocal operatorfunc=' . a:func
 endfunction
 
@@ -152,6 +151,7 @@ function! s:get_info(name)
 		" initialization
 		let b:lion = {}
 		let b:lion.state = 0
+		let b:lion.count = 1
 		let b:lion.pattern = ''
 	endif
 	return b:lion[a:name]
