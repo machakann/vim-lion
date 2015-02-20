@@ -27,6 +27,8 @@ function! s:align(mode, type, align_char)
 			let align_pattern = nr2char(getchar())
 			if align_pattern == '/'
 				let align_pattern .= input(g:lion_prompt)
+			elseif align_pattern == ' '
+				let align_pattern = '/\S\zs\s'
 			endif
 			call s:set_info('pattern', align_pattern)
 		endif
