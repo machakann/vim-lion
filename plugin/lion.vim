@@ -6,25 +6,17 @@ let s:count = 1
 if !exists('g:lion_prompt')
 	let g:lion_prompt = 'Pattern [/]: '
 endif
-function! s:command(func, ...)
-	let s:count = v:count1
-	if a:0
-		return ":" . "\<C-U>call " . a:func . "(visualmode(), 1)\<CR>"
-	else
-		return ":" . "\<C-U>set opfunc=" . a:func . "\<CR>g@"
-	endif
+
+function! s:alignRight(type)
+	return s:align('right', a:type, '')
 endfunction
 
-function! s:alignRight(type, ...)
-	return s:align('right', a:type, a:0, '')
-endfunction
-
-function! s:alignLeft(type, ...)
-	return s:align('left', a:type, a:0, '')
+function! s:alignLeft(type)
+	return s:align('left', a:type, '')
 endfunction
 
 " Align a range to a particular character
-function! s:align(mode, type, vis, align_char)
+function! s:align(mode, type, align_char)
 	let sel_save = &selection
 	let &selection = "inclusive"
 
@@ -39,12 +31,7 @@ function! s:align(mode, type, vis, align_char)
 		endif
 
 		" Determine range boundaries
-		if a:vis
-			let pos = s:getpos("'<", "'>", visualmode())
-		else
-			let pos = s:getpos("'[", "']", a:type)
-		endif
-		let [start_line, end_line, start_col, end_col, middle_start_col, middle_end_col] = pos
+		let [start_line, end_line, start_col, end_col, middle_start_col, middle_end_col] = s:getpos("'[", "']", a:type)
 
 		let changed = 0 " TODO: Use this for 'all' mode when I get around to it
 
@@ -156,6 +143,10 @@ function! s:first_non_ws_after(line, pattern, start, count)
 	endif
 endfunction
 
+function! s:set_opfunc(func) abort
+	execute 'set operatorfunc=' . a:func
+endfunction
+
 " Echo a string and wait for input (used when I'm debugging)
 function! s:debug_str(str)
 	echo a:str
@@ -170,10 +161,10 @@ function! s:assign_map(map, func)
 	execute 'xmap <silent> ' . a:map . ' <Plug>VLion' . a:func
 endfunction
 
-nnoremap <silent> <expr> <Plug>LionRight <SID>command("<SID>alignRight")
-xnoremap <silent> <expr> <Plug>VLionRight <SID>command("<SID>alignRight", 1)
-nnoremap <silent> <expr> <Plug>LionLeft <SID>command("<SID>alignLeft")
-xnoremap <silent> <expr> <Plug>VLionLeft <SID>command("<SID>alignLeft", 1)
+nnoremap <silent> <Plug>LionRight  :<C-u>call <SID>set_opfunc("<SID>alignRight")<CR>g@
+xnoremap <silent> <Plug>VLionRight :<C-u>call <SID>set_opfunc("<SID>alignRight")<CR>gvg@
+nnoremap <silent> <Plug>LionLeft   :<C-u>call <SID>set_opfunc("<SID>alignLeft")<CR>g@
+xnoremap <silent> <Plug>VLionLeft  :<C-u>call <SID>set_opfunc("<SID>alignLeft")<CR>gvg@
 
 if !exists('g:lion_create_maps')
 	let g:lion_create_maps = 1
