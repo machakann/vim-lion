@@ -8,11 +8,11 @@ if !exists('g:lion_prompt')
 endif
 
 function! s:alignRight(type)
-	return s:align('right', a:type, '')
+	return s:align('right', a:type, s:get_info('state') ? '' : s:get_info('pattern'))
 endfunction
 
 function! s:alignLeft(type)
-	return s:align('left', a:type, '')
+	return s:align('left', a:type, s:get_info('state') ? '' : s:get_info('pattern'))
 endfunction
 
 " Align a range to a particular character
@@ -25,9 +25,10 @@ function! s:align(mode, type, align_char)
 		let align_pattern = a:align_char
 		if align_pattern == ''
 			let align_pattern = nr2char(getchar())
-		endif
-		if align_pattern == '/'
-			let align_pattern .= input(g:lion_prompt)
+			if align_pattern == '/'
+				let align_pattern .= input(g:lion_prompt)
+			endif
+			call s:set_info('pattern', align_pattern)
 		endif
 
 		" Determine range boundaries
@@ -80,13 +81,8 @@ function! s:align(mode, type, align_char)
 				let changed = 1 " TODO: Detect changes in 'all' mode
 			endif
 		endfor
-
-		if align_pattern[0] == '/'
-			silent! call repeat#set("\<Plug>LionRepeat".align_pattern."\<CR>")
-		else
-			silent! call repeat#set("\<Plug>LionRepeat".align_pattern)
-		endif
 	finally
+		call s:set_info('state', 0)
 		let &selection = sel_save
 	endtry
 endfunction
@@ -144,7 +140,27 @@ function! s:first_non_ws_after(line, pattern, start, count)
 endfunction
 
 function! s:set_opfunc(func) abort
-	execute 'set operatorfunc=' . a:func
+	let s:count = v:count1
+	call s:set_info('state', 1)
+	execute 'setlocal operatorfunc=' . a:func
+endfunction
+
+function! s:get_info(name)
+	if !exists('b:lion')
+		" initialization
+		let b:lion = {}
+		let b:lion.state = 0
+		let b:lion.pattern = ''
+	endif
+	return b:lion[a:name]
+endfunction
+
+function! s:set_info(name, value)
+	if !exists('b:lion')
+		" initialization
+		call s:get_info('state')
+	endif
+	let b:lion[a:name] = a:value
 endfunction
 
 " Echo a string and wait for input (used when I'm debugging)
